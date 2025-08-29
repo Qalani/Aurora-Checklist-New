@@ -1,10 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
 export type Database = {
   public: {
     Tables: {
@@ -14,9 +9,25 @@ export type Database = {
           title: string
           description: string | null
           completed: boolean
+          archived: boolean
+          pinned: boolean
           priority: 'low' | 'medium' | 'high'
           category: string
           category_color: string
+          due_date: string | null
+          repeat_interval:
+            | 'none'
+            | 'daily'
+            | 'weekly'
+            | 'monthly'
+            | 'yearly'
+            | 'sunday'
+            | 'monday'
+            | 'tuesday'
+            | 'wednesday'
+            | 'thursday'
+            | 'friday'
+            | 'saturday'
           order: number
           created_at: string
           updated_at: string
@@ -27,9 +38,25 @@ export type Database = {
           title: string
           description?: string | null
           completed?: boolean
+          archived?: boolean
+          pinned?: boolean
           priority?: 'low' | 'medium' | 'high'
           category: string
           category_color: string
+          due_date?: string | null
+          repeat_interval?:
+            | 'none'
+            | 'daily'
+            | 'weekly'
+            | 'monthly'
+            | 'yearly'
+            | 'sunday'
+            | 'monday'
+            | 'tuesday'
+            | 'wednesday'
+            | 'thursday'
+            | 'friday'
+            | 'saturday'
           order: number
           created_at?: string
           updated_at?: string
@@ -40,9 +67,25 @@ export type Database = {
           title?: string
           description?: string | null
           completed?: boolean
+          archived?: boolean
+          pinned?: boolean
           priority?: 'low' | 'medium' | 'high'
           category?: string
           category_color?: string
+          due_date?: string | null
+          repeat_interval?:
+            | 'none'
+            | 'daily'
+            | 'weekly'
+            | 'monthly'
+            | 'yearly'
+            | 'sunday'
+            | 'monday'
+            | 'tuesday'
+            | 'wednesday'
+            | 'thursday'
+            | 'friday'
+            | 'saturday'
           order?: number
           created_at?: string
           updated_at?: string
@@ -75,3 +118,8 @@ export type Database = {
     }
   }
 }
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)

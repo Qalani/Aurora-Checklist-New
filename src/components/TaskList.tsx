@@ -7,7 +7,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { CheckCircle2, Circle, Trash2, Star, Calendar, GripVertical, Edit2, Check, X, Archive, Pin, Repeat } from 'lucide-react'
-import { Task, Category, PRIORITY_COLORS, PRIORITY_LABELS, REPEAT_LABELS, Weekday } from '@/types'
+import { Task, Category, PRIORITY_COLORS, PRIORITY_LABELS, REPEAT_LABELS, Weekday, RepeatInterval } from '@/types'
 
 interface TaskListProps {
   tasks: Task[]
@@ -53,7 +53,7 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
 
   const isWeekday = WEEKDAYS.includes(task.repeat_interval as Weekday)
   const [repeatChoice, setRepeatChoice] = useState<
-    'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'weekday'
+    RepeatInterval | 'weekday'
   >(isWeekday ? 'weekday' : task.repeat_interval)
   const [repeatDay, setRepeatDay] = useState<Weekday>(
     isWeekday ? (task.repeat_interval as Weekday) : 'monday'

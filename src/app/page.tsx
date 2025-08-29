@@ -103,13 +103,15 @@ export default function Home() {
     const activeCount = tasks.filter(t => !t.archived).length
     const { data, error } = await supabase
       .from('tasks')
-      .insert({
-        ...taskData,
-        user_id: user.id,
-        completed: false,
-        archived: false,
-        order: activeCount + 1,
-      })
+      .insert([
+        {
+          ...taskData,
+          user_id: user.id,
+          completed: false,
+          archived: false,
+          order: activeCount + 1,
+        },
+      ])
       .select()
       .single()
 
@@ -280,7 +282,7 @@ export default function Home() {
     if (!user) return
     const { data: newCategory, error } = await supabase
       .from('categories')
-      .insert({ ...data, user_id: user.id })
+      .insert([{ ...data, user_id: user.id }])
       .select()
       .single()
 

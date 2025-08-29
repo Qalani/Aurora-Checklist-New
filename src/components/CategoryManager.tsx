@@ -8,6 +8,9 @@ import { Category, CategoryFormData } from '@/types'
 interface CategoryManagerProps {
   categories: Category[]
   onClose: () => void
+  onCreate: (data: CategoryFormData) => Promise<void>
+  onUpdate: (id: string, data: CategoryFormData) => Promise<void>
+  onDelete: (id: string) => Promise<void>
 }
 
 const COLOR_OPTIONS = [
@@ -15,7 +18,13 @@ const COLOR_OPTIONS = [
   '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1'
 ]
 
-export default function CategoryManager({ categories, onClose }: CategoryManagerProps) {
+export default function CategoryManager({
+  categories,
+  onClose,
+  onCreate,
+  onUpdate,
+  onDelete,
+}: CategoryManagerProps) {
   const [showForm, setShowForm] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [formData, setFormData] = useState<CategoryFormData>({
@@ -23,21 +32,21 @@ export default function CategoryManager({ categories, onClose }: CategoryManager
     color: COLOR_OPTIONS[0]
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.name.trim()) return
 
-    if (editingCategory) {
-      // Update existing category
-      console.log('Updating category:', { ...editingCategory, ...formData })
-    } else {
-      // Create new category
-      console.log('Creating category:', formData)
+    try {
+      if (editingCategory) {
+        await onUpdate(editingCategory.id, formData)
+      } else {
+        await onCreate(formData)
+      }
+    } finally {
+      setFormData({ name: '', color: COLOR_OPTIONS[0] })
+      setEditingCategory(null)
+      setShowForm(false)
     }
-
-    setFormData({ name: '', color: COLOR_OPTIONS[0] })
-    setEditingCategory(null)
-    setShowForm(false)
   }
 
   const handleEdit = (category: Category) => {
@@ -46,8 +55,8 @@ export default function CategoryManager({ categories, onClose }: CategoryManager
     setShowForm(true)
   }
 
-  const handleDelete = (categoryId: string) => {
-    console.log('Deleting category:', categoryId)
+  const handleDelete = async (categoryId: string) => {
+    await onDelete(categoryId)
   }
 
   return (

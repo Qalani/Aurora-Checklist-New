@@ -7,7 +7,7 @@ import TaskList from '@/components/TaskList'
 import TaskForm from '@/components/TaskForm'
 import CategoryManager from '@/components/CategoryManager'
 import ProgressStats from '@/components/ProgressStats'
-import { Task, Category } from '@/types'
+import { Task, Category, CategoryFormData } from '@/types'
 import { supabase } from '@/lib/supabase'
 import AuthForm from '@/components/AuthForm'
 import type { User } from '@supabase/supabase-js'
@@ -168,6 +168,58 @@ export default function Home() {
           .eq('user_id', user?.id)
       )
     )
+  }
+
+  const addCategory = async (data: CategoryFormData) => {
+    if (!user) return
+    const { data: newCategory, error } = await supabase
+      .from('categories')
+      .insert({ ...data, user_id: user.id })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating category:', error)
+      return
+    }
+
+    setCategories((prev) => [...prev, newCategory as Category])
+  }
+
+  const updateCategory = async (id: string, data: CategoryFormData) => {
+    if (!user) return
+    const { data: updated, error } = await supabase
+      .from('categories')
+      .update({ ...data })
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating category:', error)
+      return
+    }
+
+    setCategories((prev) =>
+      prev.map((c) => (c.id === id ? (updated as Category) : c))
+    )
+  }
+
+  const deleteCategory = async (id: string) => {
+    if (!user) return
+    const { error } = await supabase
+      .from('categories')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id)
+
+    if (error) {
+      console.error('Error deleting category:', error)
+      return
+    }
+
+    setCategories((prev) => prev.filter((c) => c.id !== id))
   }
 
   const handleSignOut = async () => {
@@ -545,6 +597,9 @@ export default function Home() {
           {showCategoryManager && (
             <CategoryManager
               categories={categories}
+              onCreate={addCategory}
+              onUpdate={updateCategory}
+              onDelete={deleteCategory}
               onClose={() => setShowCategoryManager(false)}
             />
           )}

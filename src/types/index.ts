@@ -42,7 +42,22 @@ export interface CategoryFormData {
 
 export type PriorityLevel = 'low' | 'medium' | 'high'
 
-export type RepeatInterval = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
+export type Weekday =
+  | 'sunday'
+  | 'monday'
+  | 'tuesday'
+  | 'wednesday'
+  | 'thursday'
+  | 'friday'
+  | 'saturday'
+
+export type RepeatInterval =
+  | 'none'
+  | 'daily'
+  | 'weekly'
+  | 'monthly'
+  | 'yearly'
+  | Weekday
 
 export const PRIORITY_COLORS = {
   low: 'bg-blue-500',
@@ -61,5 +76,12 @@ export const REPEAT_LABELS = {
   daily: 'Daily',
   weekly: 'Weekly',
   monthly: 'Monthly',
-  yearly: 'Yearly'
+  yearly: 'Yearly',
+  sunday: 'Sunday',
+  monday: 'Monday',
+  tuesday: 'Tuesday',
+  wednesday: 'Wednesday',
+  thursday: 'Thursday',
+  friday: 'Friday',
+  saturday: 'Saturday'
 } as const

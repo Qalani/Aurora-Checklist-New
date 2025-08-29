@@ -7,7 +7,7 @@ import TaskList from '@/components/TaskList'
 import TaskForm from '@/components/TaskForm'
 import CategoryManager from '@/components/CategoryManager'
 import ProgressStats from '@/components/ProgressStats'
-import { Task, Category, CategoryFormData } from '@/types'
+import { Task, Category, CategoryFormData, Weekday } from '@/types'
 import { supabase } from '@/lib/supabase'
 import AuthForm from '@/components/AuthForm'
 import type { User } from '@supabase/supabase-js'
@@ -146,6 +146,21 @@ export default function Home() {
         case 'yearly':
           base.setFullYear(base.getFullYear() + 1)
           break
+        case 'sunday':
+        case 'monday':
+        case 'tuesday':
+        case 'wednesday':
+        case 'thursday':
+        case 'friday':
+        case 'saturday': {
+          const weekdayIndex = (
+            ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as Weekday[]
+          ).indexOf(task.repeat_interval as Weekday)
+          let diff = (weekdayIndex - base.getDay() + 7) % 7
+          if (diff === 0) diff = 7
+          base.setDate(base.getDate() + diff)
+          break
+        }
       }
       const { data, error } = await supabase
         .from('tasks')

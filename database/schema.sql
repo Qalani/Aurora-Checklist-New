@@ -16,7 +16,12 @@ CREATE TABLE IF NOT EXISTS tasks (
   category TEXT NOT NULL,
   category_color TEXT NOT NULL,
   due_date DATE,
-  repeat_interval TEXT CHECK (repeat_interval IN ('none','daily','weekly','monthly','yearly')) DEFAULT 'none',
+  repeat_interval TEXT CHECK (
+    repeat_interval IN (
+      'none','daily','weekly','monthly','yearly',
+      'sunday','monday','tuesday','wednesday','thursday','friday','saturday'
+    )
+  ) DEFAULT 'none',
   "order" INTEGER NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

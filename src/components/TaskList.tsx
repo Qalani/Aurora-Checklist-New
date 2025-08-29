@@ -7,7 +7,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { CheckCircle2, Circle, Trash2, Star, Calendar, GripVertical, Edit2, Check, X, Archive, Pin, Repeat } from 'lucide-react'
-import { Task, Category, PRIORITY_COLORS, PRIORITY_LABELS, REPEAT_LABELS } from '@/types'
+import { Task, Category, PRIORITY_COLORS, PRIORITY_LABELS, REPEAT_LABELS, Weekday } from '@/types'
 
 interface TaskListProps {
   tasks: Task[]
@@ -29,6 +29,16 @@ interface SortableTaskItemProps {
   index: number
 }
 
+const WEEKDAYS: Weekday[] = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday'
+]
+
 function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onEdit, index }: SortableTaskItemProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editData, setEditData] = useState({
@@ -41,6 +51,14 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
     repeat_interval: task.repeat_interval
   })
 
+  const isWeekday = WEEKDAYS.includes(task.repeat_interval as Weekday)
+  const [repeatChoice, setRepeatChoice] = useState<
+    'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'weekday'
+  >(isWeekday ? 'weekday' : task.repeat_interval)
+  const [repeatDay, setRepeatDay] = useState<Weekday>(
+    isWeekday ? (task.repeat_interval as Weekday) : 'monday'
+  )
+
   useEffect(() => {
     setEditData({
       title: task.title,
@@ -51,7 +69,17 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
       due_date: task.due_date ? task.due_date.split('T')[0] : '',
       repeat_interval: task.repeat_interval
     })
+    const weekday = WEEKDAYS.includes(task.repeat_interval as Weekday)
+    setRepeatChoice(weekday ? 'weekday' : task.repeat_interval)
+    setRepeatDay(weekday ? (task.repeat_interval as Weekday) : 'monday')
   }, [task])
+
+  useEffect(() => {
+    setEditData(prev => ({
+      ...prev,
+      repeat_interval: repeatChoice === 'weekday' ? repeatDay : repeatChoice
+    }))
+  }, [repeatChoice, repeatDay])
 
   const handleCategoryChange = (name: string) => {
     const cat = categories.find(c => c.name === name)
@@ -88,6 +116,9 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
       due_date: task.due_date ? task.due_date.split('T')[0] : '',
       repeat_interval: task.repeat_interval
     })
+    const weekday = WEEKDAYS.includes(task.repeat_interval as Weekday)
+    setRepeatChoice(weekday ? 'weekday' : task.repeat_interval)
+    setRepeatDay(weekday ? (task.repeat_interval as Weekday) : 'monday')
   }
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id })
 
@@ -218,8 +249,12 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
                   ))}
                 </select>
                 <select
-                  value={editData.repeat_interval}
-                  onChange={(e) => setEditData(prev => ({ ...prev, repeat_interval: e.target.value as Task['repeat_interval'] }))}
+                  value={repeatChoice}
+                  onChange={(e) =>
+                    setRepeatChoice(
+                      e.target.value as 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'weekday'
+                    )
+                  }
                   className="px-2 py-1 bg-white/10 border border-white/20 rounded text-white"
                 >
                   <option value="none">No repeat</option>
@@ -227,7 +262,21 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
                   <option value="weekly">Weekly</option>
                   <option value="monthly">Monthly</option>
                   <option value="yearly">Yearly</option>
+                  <option value="weekday">Specific day of the week</option>
                 </select>
+                {repeatChoice === 'weekday' && (
+                  <select
+                    value={repeatDay}
+                    onChange={(e) => setRepeatDay(e.target.value as Weekday)}
+                    className="px-2 py-1 bg-white/10 border border-white/20 rounded text-white"
+                  >
+                    {WEEKDAYS.map((day) => (
+                      <option key={day} value={day}>
+                        {day.charAt(0).toUpperCase() + day.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             </>
           ) : (

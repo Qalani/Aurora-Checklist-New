@@ -9,6 +9,8 @@ export interface Task {
   category: string
   category_color: string
   due_date: string | null
+  reminder_time: string | null
+  reminder_sent: boolean
   repeat_interval: RepeatInterval
   order: number
   created_at: string
@@ -31,6 +33,8 @@ export interface TaskFormData {
   category: string
   category_color: string
   due_date: string
+  reminder_time: string
+  reminder_sent: boolean
   repeat_interval: RepeatInterval
   pinned: boolean
 }

@@ -6,8 +6,8 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { CheckCircle2, Circle, Trash2, Star, Calendar, GripVertical, Edit2, Check, X, Archive } from 'lucide-react'
-import { Task, Category, PRIORITY_COLORS, PRIORITY_LABELS } from '@/types'
+import { CheckCircle2, Circle, Trash2, Star, Calendar, GripVertical, Edit2, Check, X, Archive, Pin, Repeat } from 'lucide-react'
+import { Task, Category, PRIORITY_COLORS, PRIORITY_LABELS, REPEAT_LABELS } from '@/types'
 
 interface TaskListProps {
   tasks: Task[]
@@ -37,7 +37,8 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
     priority: task.priority,
     category: task.category,
     category_color: task.category_color,
-    due_date: task.due_date ? task.due_date.split('T')[0] : ''
+    due_date: task.due_date ? task.due_date.split('T')[0] : '',
+    repeat_interval: task.repeat_interval
   })
 
   useEffect(() => {
@@ -47,7 +48,8 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
       priority: task.priority,
       category: task.category,
       category_color: task.category_color,
-      due_date: task.due_date ? task.due_date.split('T')[0] : ''
+      due_date: task.due_date ? task.due_date.split('T')[0] : '',
+      repeat_interval: task.repeat_interval
     })
   }, [task])
 
@@ -68,7 +70,8 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
       priority: editData.priority,
       category: editData.category,
       category_color: editData.category_color,
-      due_date: editData.due_date || null
+      due_date: editData.due_date || null,
+      repeat_interval: editData.repeat_interval
     })
     setIsEditing(false)
   }
@@ -82,7 +85,8 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
       priority: task.priority,
       category: task.category,
       category_color: task.category_color,
-      due_date: task.due_date ? task.due_date.split('T')[0] : ''
+      due_date: task.due_date ? task.due_date.split('T')[0] : '',
+      repeat_interval: task.repeat_interval
     })
   }
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id })
@@ -213,6 +217,17 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
                     </option>
                   ))}
                 </select>
+                <select
+                  value={editData.repeat_interval}
+                  onChange={(e) => setEditData(prev => ({ ...prev, repeat_interval: e.target.value as Task['repeat_interval'] }))}
+                  className="px-2 py-1 bg-white/10 border border-white/20 rounded text-white"
+                >
+                  <option value="none">No repeat</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
               </div>
             </>
           ) : (
@@ -257,6 +272,16 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
                 >
                   {task.category}
                 </motion.span>
+                {task.repeat_interval !== 'none' && (
+                  <motion.span
+                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white/20 text-white"
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: 'spring', stiffness: 400 }}
+                  >
+                    <Repeat className="w-3 h-3 mr-1" />
+                    {REPEAT_LABELS[task.repeat_interval]}
+                  </motion.span>
+                )}
                 <span className="text-xs text-gray-300 flex items-center">
                   <Calendar className="w-3 h-3 mr-1" />
                   {new Date((task.due_date || task.created_at)).toLocaleDateString()}
@@ -298,6 +323,20 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
             <Edit2 className="w-5 h-5" />
           </motion.button>
         )}
+
+        <motion.button
+          onClick={(e) => {
+            e.stopPropagation()
+            onEdit(task.id, { pinned: !task.pinned })
+          }}
+          className={`flex-shrink-0 hover:scale-110 transition-all duration-200 hover:bg-white/10 p-2 rounded-lg ${
+            task.pinned ? 'text-purple-400 hover:text-purple-300' : 'text-gray-400 hover:text-gray-300'
+          }`}
+          whileHover={{ scale: 1.1, rotate: 5 }}
+          whileTap={{ scale: 0.9, rotate: -5 }}
+        >
+          <Pin className="w-5 h-5" />
+        </motion.button>
 
         {!task.archived && (
           <motion.button
@@ -347,33 +386,45 @@ export default function TaskList({ tasks, categories, onToggle, onDelete, onArch
   )
 
   const viewTasks = tasks.filter(task => (view === 'archived' ? task.archived : !task.archived))
+  const pinnedTasks = viewTasks.filter(task => task.pinned)
+  const unpinnedTasks = viewTasks.filter(task => !task.pinned)
 
-  const filteredTasks = viewTasks.filter(task => {
+  const filterFn = (task: Task) => {
     const matchesSearch =
       task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (task.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
     const matchesPriority = priorityFilter ? task.priority === priorityFilter : true
     return matchesSearch && matchesPriority
-  })
+  }
+
+  const filteredPinnedTasks = pinnedTasks.filter(filterFn)
+  const filteredUnpinnedTasks = unpinnedTasks.filter(filterFn)
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
+    if (!over || active.id === over.id) return
 
-    if (active.id !== over?.id) {
-      const currentTasks = tasks.filter(t => (view === 'archived' ? t.archived : !t.archived))
-      const oldIndex = currentTasks.findIndex(task => task.id === active.id)
-      const newIndex = currentTasks.findIndex(task => task.id === over?.id)
+    const viewTasks = tasks.filter(t => (view === 'archived' ? t.archived : !t.archived))
+    const activeTask = viewTasks.find(t => t.id === active.id)
+    const overTask = viewTasks.find(t => t.id === over.id)
+    if (!activeTask || !overTask) return
+    if (activeTask.pinned !== overTask.pinned) return
 
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newCurrentTasks = arrayMove(currentTasks, oldIndex, newIndex)
-        const otherTasks = tasks.filter(t => (view === 'archived' ? !t.archived : t.archived))
-        const newTasks =
-          view === 'archived'
-            ? [...otherTasks, ...newCurrentTasks]
-            : [...newCurrentTasks, ...otherTasks]
-        onReorder(newTasks)
-      }
-    }
+    const pinned = viewTasks.filter(t => t.pinned)
+    const unpinned = viewTasks.filter(t => !t.pinned)
+    const group = activeTask.pinned ? pinned : unpinned
+    const otherGroup = activeTask.pinned ? unpinned : pinned
+    const oldIndex = group.findIndex(t => t.id === active.id)
+    const newIndex = group.findIndex(t => t.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const newGroup = arrayMove(group, oldIndex, newIndex)
+    const newViewTasks = activeTask.pinned
+      ? [...newGroup, ...otherGroup]
+      : [...otherGroup, ...newGroup]
+    const otherTasks = tasks.filter(t => (view === 'archived' ? !t.archived : t.archived))
+    const newTasks = view === 'archived' ? [...otherTasks, ...newViewTasks] : [...newViewTasks, ...otherTasks]
+    onReorder(newTasks)
   }
 
   if (viewTasks.length === 0) {
@@ -482,9 +533,9 @@ export default function TaskList({ tasks, categories, onToggle, onDelete, onArch
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        <SortableContext items={filteredTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext items={filteredPinnedTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           <AnimatePresence mode="popLayout">
-            {filteredTasks.map((task, index) => (
+            {filteredPinnedTasks.map((task, index) => (
               <SortableTaskItem
                 key={task.id}
                 task={task}
@@ -494,6 +545,22 @@ export default function TaskList({ tasks, categories, onToggle, onDelete, onArch
                 onArchive={onArchive}
                 onEdit={onEdit}
                 index={index}
+              />
+            ))}
+          </AnimatePresence>
+        </SortableContext>
+        <SortableContext items={filteredUnpinnedTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+          <AnimatePresence mode="popLayout">
+            {filteredUnpinnedTasks.map((task, index) => (
+              <SortableTaskItem
+                key={task.id}
+                task={task}
+                categories={categories}
+                onToggle={onToggle}
+                onDelete={onDelete}
+                onArchive={onArchive}
+                onEdit={onEdit}
+                index={index + filteredPinnedTasks.length}
               />
             ))}
           </AnimatePresence>

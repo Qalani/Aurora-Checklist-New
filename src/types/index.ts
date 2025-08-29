@@ -4,10 +4,12 @@ export interface Task {
   description: string | null
   completed: boolean
   archived: boolean
+  pinned: boolean
   priority: 'low' | 'medium' | 'high'
   category: string
   category_color: string
   due_date: string | null
+  repeat_interval: RepeatInterval
   order: number
   created_at: string
   updated_at: string
@@ -29,6 +31,8 @@ export interface TaskFormData {
   category: string
   category_color: string
   due_date: string
+  repeat_interval: RepeatInterval
+  pinned: boolean
 }
 
 export interface CategoryFormData {
@@ -37,6 +41,8 @@ export interface CategoryFormData {
 }
 
 export type PriorityLevel = 'low' | 'medium' | 'high'
+
+export type RepeatInterval = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
 
 export const PRIORITY_COLORS = {
   low: 'bg-blue-500',
@@ -48,4 +54,12 @@ export const PRIORITY_LABELS = {
   low: 'Low',
   medium: 'Medium',
   high: 'High'
+} as const
+
+export const REPEAT_LABELS = {
+  none: 'Does not repeat',
+  daily: 'Daily',
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+  yearly: 'Yearly'
 } as const

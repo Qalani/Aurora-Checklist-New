@@ -118,17 +118,56 @@ export default function Home() {
       return
     }
 
-    setTasks((prev) => {
-      const archived = prev.filter(t => t.archived)
-      const active = prev.filter(t => !t.archived)
-      return [...active, data as Task, ...archived]
-    })
+    const archived = tasks.filter(t => t.archived)
+    const active = [...tasks.filter(t => !t.archived), data as Task]
+    const pinned = active.filter(t => t.pinned)
+    const unpinned = active.filter(t => !t.pinned)
+    const newList = [...pinned, ...unpinned, ...archived]
+    setTasks(newList)
+    updateTaskOrder(newList)
     setShowTaskForm(false)
   }
 
   const toggleTask = async (id: string) => {
     const task = tasks.find((t) => t.id === id)
     if (!task) return
+    if (!task.completed && task.repeat_interval !== 'none') {
+      const base = task.due_date ? new Date(task.due_date) : new Date()
+      switch (task.repeat_interval) {
+        case 'daily':
+          base.setDate(base.getDate() + 1)
+          break
+        case 'weekly':
+          base.setDate(base.getDate() + 7)
+          break
+        case 'monthly':
+          base.setMonth(base.getMonth() + 1)
+          break
+        case 'yearly':
+          base.setFullYear(base.getFullYear() + 1)
+          break
+      }
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({
+          due_date: base.toISOString(),
+          completed: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .eq('user_id', user?.id)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Error toggling task:', error)
+        return
+      }
+
+      setTasks((prev) => prev.map((t) => (t.id === id ? (data as Task) : t)))
+      return
+    }
+
     const { data, error } = await supabase
       .from('tasks')
       .update({
@@ -162,7 +201,19 @@ export default function Home() {
       return
     }
 
-    setTasks((prev) => prev.map((t) => (t.id === id ? (data as Task) : t)))
+    setTasks((prev) => {
+      const replaced = prev.map((t) => (t.id === id ? (data as Task) : t))
+      if ('pinned' in updated) {
+        const active = replaced.filter(t => !t.archived)
+        const archived = replaced.filter(t => t.archived)
+        const pinned = active.filter(t => t.pinned)
+        const unpinned = active.filter(t => !t.pinned)
+        const reordered = [...pinned, ...unpinned, ...archived]
+        updateTaskOrder(reordered)
+        return reordered
+      }
+      return replaced
+    })
   }
 
   const deleteTask = async (id: string) => {

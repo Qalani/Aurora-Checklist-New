@@ -24,23 +24,25 @@ export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProp
     priority: 'medium',
     category: categories[0]?.name || '',
     category_color: categories[0]?.color || '#3B82F6',
-    due_date: ''
+    due_date: '',
+    repeat_interval: 'none',
+    pinned: false
   })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.title.trim()) return
 
-    const selectedCategory = categories.find(c => c.name === formData.category)
-    const taskData = {
-      ...formData,
-      category: selectedCategory?.name || 'General',
-      category_color: selectedCategory?.color || '#6B7280',
-      due_date: formData.due_date || null,
-      completed: false,
-      archived: false,
-      order: 0
-    }
+      const selectedCategory = categories.find(c => c.name === formData.category)
+      const taskData = {
+        ...formData,
+        category: selectedCategory?.name || 'General',
+        category_color: selectedCategory?.color || '#6B7280',
+        due_date: formData.due_date || null,
+        completed: false,
+        archived: false,
+        order: 0
+      }
 
     onSubmit(taskData)
   }
@@ -108,17 +110,34 @@ export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProp
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-cyan-200 mb-2">
-                Due Date
-              </label>
-              <input
-                type="date"
-                value={formData.due_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-              />
-            </div>
+      <div>
+        <label className="block text-sm font-medium text-cyan-200 mb-2">
+          Due Date
+        </label>
+        <input
+          type="date"
+          value={formData.due_date}
+          onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
+          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-cyan-200 mb-2">
+          Repeat
+        </label>
+        <select
+          value={formData.repeat_interval}
+          onChange={(e) => setFormData(prev => ({ ...prev, repeat_interval: e.target.value as Task['repeat_interval'] }))}
+          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+        >
+          <option value="none">Does not repeat</option>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+      </div>
 
             <div>
               <label className="block text-sm font-medium text-cyan-200 mb-2">
@@ -143,22 +162,32 @@ export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProp
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-cyan-200 mb-2">
-                Category
-              </label>
-              <select
-                value={formData.category}
-                onChange={(e) => handleCategoryChange(e.target.value)}
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-              >
-                {categories.map((category) => (
-                  <option key={category.id} value={category.name}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+      <div>
+        <label className="block text-sm font-medium text-cyan-200 mb-2">
+          Category
+        </label>
+        <select
+          value={formData.category}
+          onChange={(e) => handleCategoryChange(e.target.value)}
+          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+        >
+          {categories.map((category) => (
+            <option key={category.id} value={category.name}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={formData.pinned}
+          onChange={(e) => setFormData(prev => ({ ...prev, pinned: e.target.checked }))}
+          className="w-4 h-4 text-cyan-500 bg-white/10 border-white/20 rounded focus:ring-cyan-500"
+        />
+        <span className="text-sm text-white">Pin task</span>
+      </div>
 
             <button
               type="submit"

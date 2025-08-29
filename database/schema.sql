@@ -18,8 +18,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   due_date DATE,
   repeat_interval TEXT CHECK (
     repeat_interval IN (
-      'none','daily','weekly','monthly','yearly',
-      'sunday','monday','tuesday','wednesday','thursday','friday','saturday'
+      'none','daily','weekly','monthly','yearly'
     )
   ) DEFAULT 'none',
   "order" INTEGER NOT NULL,

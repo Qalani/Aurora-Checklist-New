@@ -15,19 +15,7 @@ export type Database = {
           category: string
           category_color: string
           due_date: string | null
-          repeat_interval:
-            | 'none'
-            | 'daily'
-            | 'weekly'
-            | 'monthly'
-            | 'yearly'
-            | 'sunday'
-            | 'monday'
-            | 'tuesday'
-            | 'wednesday'
-            | 'thursday'
-            | 'friday'
-            | 'saturday'
+          repeat_interval: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
           order: number
           created_at: string
           updated_at: string
@@ -44,19 +32,7 @@ export type Database = {
           category: string
           category_color: string
           due_date?: string | null
-          repeat_interval?:
-            | 'none'
-            | 'daily'
-            | 'weekly'
-            | 'monthly'
-            | 'yearly'
-            | 'sunday'
-            | 'monday'
-            | 'tuesday'
-            | 'wednesday'
-            | 'thursday'
-            | 'friday'
-            | 'saturday'
+          repeat_interval?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
           order: number
           created_at?: string
           updated_at?: string
@@ -73,19 +49,7 @@ export type Database = {
           category?: string
           category_color?: string
           due_date?: string | null
-          repeat_interval?:
-            | 'none'
-            | 'daily'
-            | 'weekly'
-            | 'monthly'
-            | 'yearly'
-            | 'sunday'
-            | 'monday'
-            | 'tuesday'
-            | 'wednesday'
-            | 'thursday'
-            | 'friday'
-            | 'saturday'
+          repeat_interval?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
           order?: number
           created_at?: string
           updated_at?: string

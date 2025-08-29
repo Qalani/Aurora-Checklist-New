@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Plus } from 'lucide-react'
-import { Task, Category, TaskFormData, PriorityLevel, Weekday } from '@/types'
+import { Task, Category, TaskFormData, PriorityLevel, RepeatInterval } from '@/types'
 
 interface TaskFormProps {
   categories: Category[]
@@ -15,16 +15,6 @@ const PRIORITY_OPTIONS: { value: PriorityLevel; label: string; color: string }[]
   { value: 'low', label: 'Low', color: 'bg-blue-500' },
   { value: 'medium', label: 'Medium', color: 'bg-yellow-500' },
   { value: 'high', label: 'High', color: 'bg-red-500' }
-]
-
-const WEEKDAYS: Weekday[] = [
-  'sunday',
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday'
 ]
 
 export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProps) {
@@ -39,17 +29,14 @@ export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProp
     pinned: false
   })
 
-  const [repeatChoice, setRepeatChoice] = useState<
-    'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'weekday'
-  >('none')
-  const [repeatDay, setRepeatDay] = useState<Weekday>('monday')
+  const [repeatChoice, setRepeatChoice] = useState<RepeatInterval>('none')
 
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
-      repeat_interval: repeatChoice === 'weekday' ? repeatDay : repeatChoice
+      repeat_interval: repeatChoice
     }))
-  }, [repeatChoice, repeatDay])
+  }, [repeatChoice])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -150,11 +137,7 @@ export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProp
         </label>
         <select
           value={repeatChoice}
-          onChange={(e) =>
-            setRepeatChoice(
-              e.target.value as 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'weekday'
-            )
-          }
+          onChange={(e) => setRepeatChoice(e.target.value as RepeatInterval)}
           className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
         >
           <option value="none">Does not repeat</option>
@@ -162,21 +145,7 @@ export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProp
           <option value="weekly">Weekly</option>
           <option value="monthly">Monthly</option>
           <option value="yearly">Yearly</option>
-          <option value="weekday">Specific day of the week</option>
         </select>
-        {repeatChoice === 'weekday' && (
-          <select
-            value={repeatDay}
-            onChange={(e) => setRepeatDay(e.target.value as Weekday)}
-            className="mt-2 w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-          >
-            {WEEKDAYS.map((day) => (
-              <option key={day} value={day}>
-                {day.charAt(0).toUpperCase() + day.slice(1)}
-              </option>
-            ))}
-          </select>
-        )}
       </div>
 
             <div>

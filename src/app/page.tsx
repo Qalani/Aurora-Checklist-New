@@ -142,6 +142,23 @@ export default function Home() {
     setTasks((prev) => prev.map((t) => (t.id === id ? (data as Task) : t)))
   }
 
+  const editTask = async (id: string, updated: Partial<Task>) => {
+    const { data, error } = await supabase
+      .from('tasks')
+      .update({ ...updated, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('user_id', user?.id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating task:', error)
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === id ? (data as Task) : t)))
+  }
+
   const deleteTask = async (id: string) => {
     const { error } = await supabase
       .from('tasks')
@@ -575,10 +592,12 @@ export default function Home() {
           />
           
           <div className="relative z-10">
-            <TaskList 
+            <TaskList
               tasks={tasks}
+              categories={categories}
               onToggle={toggleTask}
               onDelete={deleteTask}
+              onEdit={editTask}
               onReorder={updateTaskOrder}
             />
           </div>

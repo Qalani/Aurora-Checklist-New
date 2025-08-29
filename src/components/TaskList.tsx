@@ -330,6 +330,9 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
 }
 
 export default function TaskList({ tasks, categories, onToggle, onDelete, onArchive, onEdit, onReorder }: TaskListProps) {
+  const [searchTerm, setSearchTerm] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState<Task['priority'] | ''>('')
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -340,6 +343,14 @@ export default function TaskList({ tasks, categories, onToggle, onDelete, onArch
       coordinateGetter: sortableKeyboardCoordinates,
     })
   )
+
+  const filteredTasks = tasks.filter(task => {
+    const matchesSearch =
+      task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (task.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+    const matchesPriority = priorityFilter ? task.priority === priorityFilter : true
+    return matchesSearch && matchesPriority
+  })
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
@@ -413,22 +424,44 @@ export default function TaskList({ tasks, categories, onToggle, onDelete, onArch
 
   return (
     <div>
-      <motion.h2 
+      <motion.h2
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="text-2xl font-bold text-white mb-6 text-center"
       >
         Your Tasks
       </motion.h2>
-      
+
+      <div className="flex flex-col sm:flex-row gap-2 mb-6">
+        <input
+          type="text"
+          placeholder="Search tasks..."
+          className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-gray-400 focus:outline-none"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <select
+          value={priorityFilter}
+          onChange={(e) => setPriorityFilter(e.target.value as Task['priority'] | '')}
+          className="px-3 py-2 bg-white/10 border border-white/20 rounded text-white"
+        >
+          <option value="">All priorities</option>
+          {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext items={filteredTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           <AnimatePresence mode="popLayout">
-            {tasks.map((task, index) => (
+            {filteredTasks.map((task, index) => (
               <SortableTaskItem
                 key={task.id}
                 task={task}

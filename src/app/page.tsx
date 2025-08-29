@@ -127,6 +127,10 @@ export default function Home() {
     setTasks(newTasks.map((task, index) => ({ ...task, order: index + 1 })))
   }
 
+  const updateTask = (updatedTask: Task) => {
+    setTasks(prev => prev.map(t => (t.id === updatedTask.id ? updatedTask : t)))
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center overflow-hidden">
@@ -452,11 +456,13 @@ export default function Home() {
           />
           
           <div className="relative z-10">
-            <TaskList 
+            <TaskList
               tasks={tasks}
+              categories={categories}
               onToggle={toggleTask}
               onDelete={deleteTask}
               onReorder={updateTaskOrder}
+              onEdit={updateTask}
             />
           </div>
         </motion.div>

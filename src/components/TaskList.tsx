@@ -6,7 +6,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { CheckCircle2, Circle, Trash2, Star, Calendar, GripVertical, Edit2, Check, X } from 'lucide-react'
+import { CheckCircle2, Circle, Trash2, Star, Calendar, GripVertical, Edit2, Check, X, Archive } from 'lucide-react'
 import { Task, Category, PRIORITY_COLORS, PRIORITY_LABELS } from '@/types'
 
 interface TaskListProps {
@@ -14,6 +14,7 @@ interface TaskListProps {
   categories: Category[]
   onToggle: (id: string) => void
   onDelete: (id: string) => void
+  onArchive: (id: string) => void
   onEdit: (id: string, data: Partial<Task>) => void
   onReorder: (tasks: Task[]) => void
 }
@@ -23,11 +24,12 @@ interface SortableTaskItemProps {
   categories: Category[]
   onToggle: (id: string) => void
   onDelete: (id: string) => void
+  onArchive: (id: string) => void
   onEdit: (id: string, data: Partial<Task>) => void
   index: number
 }
 
-function SortableTaskItem({ task, categories, onToggle, onDelete, onEdit, index }: SortableTaskItemProps) {
+function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onEdit, index }: SortableTaskItemProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editData, setEditData] = useState({
     title: task.title,
@@ -297,6 +299,19 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onEdit, index 
           </motion.button>
         )}
 
+        {/* Archive Button */}
+        <motion.button
+          onClick={(e) => {
+            e.stopPropagation()
+            onArchive(task.id)
+          }}
+          className="flex-shrink-0 text-yellow-400 hover:text-yellow-300 hover:scale-110 transition-all duration-200 hover:bg-white/10 p-2 rounded-lg"
+          whileHover={{ scale: 1.1, rotate: 5 }}
+          whileTap={{ scale: 0.9, rotate: -5 }}
+        >
+          <Archive className="w-5 h-5" />
+        </motion.button>
+
         {/* Enhanced Delete Button */}
         <motion.button
           onClick={(e) => {
@@ -314,7 +329,7 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onEdit, index 
   )
 }
 
-export default function TaskList({ tasks, categories, onToggle, onDelete, onEdit, onReorder }: TaskListProps) {
+export default function TaskList({ tasks, categories, onToggle, onDelete, onArchive, onEdit, onReorder }: TaskListProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -420,6 +435,7 @@ export default function TaskList({ tasks, categories, onToggle, onDelete, onEdit
                 categories={categories}
                 onToggle={onToggle}
                 onDelete={onDelete}
+                onArchive={onArchive}
                 onEdit={onEdit}
                 index={index}
               />

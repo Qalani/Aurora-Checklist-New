@@ -3,6 +3,7 @@ export interface Task {
   title: string
   description: string | null
   completed: boolean
+  archived: boolean
   priority: 'low' | 'medium' | 'high'
   category: string
   category_color: string

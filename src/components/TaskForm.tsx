@@ -38,6 +38,7 @@ export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProp
       category_color: selectedCategory?.color || '#6B7280',
       due_date: formData.due_date || null,
       completed: false,
+      archived: false,
       order: 0
     }
 

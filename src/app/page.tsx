@@ -76,6 +76,7 @@ export default function Home() {
         .from('tasks')
         .select('*')
         .eq('user_id', userId)
+        .eq('archived', false)
         .order('order', { ascending: true })
 
       const { data: categoriesData, error: categoriesError } = await supabase
@@ -106,6 +107,7 @@ export default function Home() {
         ...taskData,
         user_id: user.id,
         completed: false,
+        archived: false,
         order: tasks.length + 1,
       })
       .select()
@@ -168,6 +170,21 @@ export default function Home() {
 
     if (error) {
       console.error('Error deleting task:', error)
+      return
+    }
+
+    setTasks((prev) => prev.filter((task) => task.id !== id))
+  }
+
+  const archiveTask = async (id: string) => {
+    const { error } = await supabase
+      .from('tasks')
+      .update({ archived: true, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('user_id', user?.id)
+
+    if (error) {
+      console.error('Error archiving task:', error)
       return
     }
 
@@ -597,6 +614,7 @@ export default function Home() {
               categories={categories}
               onToggle={toggleTask}
               onDelete={deleteTask}
+              onArchive={archiveTask}
               onEdit={editTask}
               onReorder={updateTaskOrder}
             />

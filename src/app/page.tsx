@@ -8,7 +8,7 @@ import TaskForm from '@/components/TaskForm'
 import CategoryManager from '@/components/CategoryManager'
 import ProgressStats from '@/components/ProgressStats'
 import { Task, Category, CategoryFormData, Weekday } from '@/types'
-import { supabase } from '@/lib/supabase'
+import { supabase, type Database } from '@/lib/supabase'
 import AuthForm from '@/components/AuthForm'
 import type { User } from '@supabase/supabase-js'
 
@@ -101,17 +101,16 @@ export default function Home() {
   ) => {
     if (!user) return
     const activeCount = tasks.filter(t => !t.archived).length
+    const newTask: Database['public']['Tables']['tasks']['Insert'] = {
+      ...taskData,
+      user_id: user.id,
+      completed: false,
+      archived: false,
+      order: activeCount + 1,
+    }
     const { data, error } = await supabase
       .from('tasks')
-      .insert([
-        {
-          ...taskData,
-          user_id: user.id,
-          completed: false,
-          archived: false,
-          order: activeCount + 1,
-        },
-      ])
+      .insert([newTask])
       .select()
       .single()
 
@@ -280,9 +279,13 @@ export default function Home() {
 
   const addCategory = async (data: CategoryFormData) => {
     if (!user) return
-    const { data: newCategory, error } = await supabase
+    const newCategory: Database['public']['Tables']['categories']['Insert'] = {
+      ...data,
+      user_id: user.id,
+    }
+    const { data: newCategoryRow, error } = await supabase
       .from('categories')
-      .insert([{ ...data, user_id: user.id }])
+      .insert([newCategory])
       .select()
       .single()
 
@@ -291,7 +294,7 @@ export default function Home() {
       return
     }
 
-    setCategories((prev) => [...prev, newCategory as Category])
+    setCategories((prev) => [...prev, newCategoryRow as Category])
   }
 
   const updateCategory = async (id: string, data: CategoryFormData) => {

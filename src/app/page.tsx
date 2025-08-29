@@ -13,7 +13,6 @@ export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [showTaskForm, setShowTaskForm] = useState(false)
-  const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [showCategoryManager, setShowCategoryManager] = useState(false)
   const [showStats, setShowStats] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -128,24 +127,8 @@ export default function Home() {
     setTasks(newTasks.map((task, index) => ({ ...task, order: index + 1 })))
   }
 
-  const startEditingTask = (task: Task) => {
-    setEditingTask(task)
-  }
-
-  const editTask = (taskData: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => {
-    if (!editingTask) return
-    setTasks(prev => prev.map(t =>
-      t.id === editingTask.id
-        ? {
-            ...t,
-            ...taskData,
-            completed: editingTask.completed,
-            order: editingTask.order,
-            updated_at: new Date().toISOString(),
-          }
-        : t
-    ))
-    setEditingTask(null)
+  const updateTask = (updatedTask: Task) => {
+    setTasks(prev => prev.map(t => (t.id === updatedTask.id ? updatedTask : t)))
   }
 
   if (loading) {
@@ -475,10 +458,11 @@ export default function Home() {
           <div className="relative z-10">
             <TaskList
               tasks={tasks}
+              categories={categories}
               onToggle={toggleTask}
               onDelete={deleteTask}
               onReorder={updateTaskOrder}
-              onEdit={startEditingTask}
+              onEdit={updateTask}
             />
           </div>
         </motion.div>
@@ -490,22 +474,6 @@ export default function Home() {
               categories={categories}
               onSubmit={addTask}
               onClose={() => setShowTaskForm(false)}
-            />
-          )}
-
-          {editingTask && (
-            <TaskForm
-              categories={categories}
-              onSubmit={editTask}
-              onClose={() => setEditingTask(null)}
-              initialData={{
-                title: editingTask.title,
-                description: editingTask.description || '',
-                priority: editingTask.priority,
-                category: editingTask.category,
-                category_color: editingTask.category_color,
-              }}
-              mode="edit"
             />
           )}
 

@@ -9,8 +9,6 @@ interface TaskFormProps {
   categories: Category[]
   onSubmit: (task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => void
   onClose: () => void
-  initialData?: TaskFormData
-  mode?: 'create' | 'edit'
 }
 
 const PRIORITY_OPTIONS: { value: PriorityLevel; label: string; color: string }[] = [
@@ -19,8 +17,8 @@ const PRIORITY_OPTIONS: { value: PriorityLevel; label: string; color: string }[]
   { value: 'high', label: 'High', color: 'bg-red-500' }
 ]
 
-export default function TaskForm({ categories, onSubmit, onClose, initialData, mode = 'create' }: TaskFormProps) {
-  const [formData, setFormData] = useState<TaskFormData>(initialData || {
+export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProps) {
+  const [formData, setFormData] = useState<TaskFormData>({
     title: '',
     description: '',
     priority: 'medium',
@@ -70,7 +68,7 @@ export default function TaskForm({ categories, onSubmit, onClose, initialData, m
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">{mode === 'edit' ? 'Edit Task' : 'Create New Task'}</h2>
+            <h2 className="text-2xl font-bold text-white">Create New Task</h2>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-white transition-colors"
@@ -147,31 +145,13 @@ export default function TaskForm({ categories, onSubmit, onClose, initialData, m
               </select>
             </div>
 
-            {mode === 'edit' ? (
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex-1 bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-semibold transition-all duration-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-cyan-500/25"
-                >
-                  Save Changes
-                </button>
-              </div>
-            ) : (
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-cyan-500/25"
-              >
-                <Plus className="inline mr-2 h-5 w-5" />
-                Create Task
-              </button>
-            )}
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-cyan-500/25"
+            >
+              <Plus className="inline mr-2 h-5 w-5" />
+              Create Task
+            </button>
           </form>
         </motion.div>
       </motion.div>

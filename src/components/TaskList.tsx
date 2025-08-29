@@ -1,15 +1,17 @@
 'use client'
 
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { CheckCircle2, Circle, Trash2, Star, Calendar, GripVertical, Pencil } from 'lucide-react'
-import { Task, PRIORITY_COLORS, PRIORITY_LABELS } from '@/types'
+import { Task, PRIORITY_COLORS, PRIORITY_LABELS, Category } from '@/types'
 
 interface TaskListProps {
   tasks: Task[]
+  categories: Category[]
   onToggle: (id: string) => void
   onDelete: (id: string) => void
   onReorder: (tasks: Task[]) => void
@@ -18,18 +20,59 @@ interface TaskListProps {
 
 interface SortableTaskItemProps {
   task: Task
+  categories: Category[]
   onToggle: (id: string) => void
   onDelete: (id: string) => void
   onEdit: (task: Task) => void
   index: number
 }
 
-function SortableTaskItem({ task, onToggle, onDelete, onEdit, index }: SortableTaskItemProps) {
+function SortableTaskItem({ task, categories, onToggle, onDelete, onEdit, index }: SortableTaskItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id })
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+  }
+
+  const [isEditing, setIsEditing] = useState(false)
+  const [formData, setFormData] = useState({
+    title: task.title,
+    description: task.description || '',
+    priority: task.priority,
+    category: task.category,
+    category_color: task.category_color,
+  })
+
+  const handleCategoryChange = (categoryName: string) => {
+    const category = categories.find(c => c.name === categoryName)
+    setFormData(prev => ({
+      ...prev,
+      category: categoryName,
+      category_color: category?.color || prev.category_color,
+    }))
+  }
+
+  const handleSave = () => {
+    const selectedCategory = categories.find(c => c.name === formData.category)
+    onEdit({
+      ...task,
+      ...formData,
+      category_color: selectedCategory?.color || formData.category_color,
+      updated_at: new Date().toISOString(),
+    })
+    setIsEditing(false)
+  }
+
+  const handleCancel = () => {
+    setFormData({
+      title: task.title,
+      description: task.description || '',
+      priority: task.priority,
+      category: task.category,
+      category_color: task.category_color,
+    })
+    setIsEditing(false)
   }
 
   return (
@@ -66,131 +109,207 @@ function SortableTaskItem({ task, onToggle, onDelete, onEdit, index }: SortableT
       />
       
       <div className="relative z-10 flex items-center gap-4">
-        {/* Enhanced Drag Handle */}
-        <motion.div
-          {...attributes}
-          {...listeners}
-          className="flex-shrink-0 cursor-grab active:cursor-grabbing p-2 hover:bg-white/10 rounded-lg transition-all duration-200"
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          whileTap={{ scale: 0.95, rotate: -5 }}
-        >
-          <GripVertical className="w-5 h-5 text-cyan-300 hover:text-cyan-200" />
-        </motion.div>
-
-        {/* Enhanced Toggle Button */}
-        <motion.button
-          onClick={(e) => {
-            e.stopPropagation()
-            onToggle(task.id)
-          }}
-          className="flex-shrink-0 text-2xl hover:scale-110 transition-all duration-200 hover:bg-white/10 p-2 rounded-lg relative overflow-hidden"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          {task.completed ? (
+        {!isEditing && (
+          <>
+            {/* Enhanced Drag Handle */}
             <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              className="relative"
+              {...attributes}
+              {...listeners}
+              className="flex-shrink-0 cursor-grab active:cursor-grabbing p-2 hover:bg-white/10 rounded-lg transition-all duration-200"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              whileTap={{ scale: 0.95, rotate: -5 }}
             >
-              <CheckCircle2 className="text-green-400" />
-              {/* Completion sparkle effect */}
-              <motion.div
-                className="absolute inset-0 text-yellow-300"
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  opacity: [0, 1, 0]
-                }}
-                transition={{ duration: 0.6, repeat: 3 }}
-              >
-                ✨
-              </motion.div>
+              <GripVertical className="w-5 h-5 text-cyan-300 hover:text-cyan-200" />
             </motion.div>
-          ) : (
-            <Circle className="text-cyan-300 hover:text-cyan-200" />
-          )}
-        </motion.button>
+
+            {/* Enhanced Toggle Button */}
+            <motion.button
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggle(task.id)
+              }}
+              className="flex-shrink-0 text-2xl hover:scale-110 transition-all duration-200 hover:bg-white/10 p-2 rounded-lg relative overflow-hidden"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              {task.completed ? (
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  className="relative"
+                >
+                  <CheckCircle2 className="text-green-400" />
+                  {/* Completion sparkle effect */}
+                  <motion.div
+                    className="absolute inset-0 text-yellow-300"
+                    animate={{
+                      scale: [1, 1.2, 1],
+                      opacity: [0, 1, 0]
+                    }}
+                    transition={{ duration: 0.6, repeat: 3 }}
+                  >
+                    ✨
+                  </motion.div>
+                </motion.div>
+              ) : (
+                <Circle className="text-cyan-300 hover:text-cyan-200" />
+              )}
+            </motion.button>
+          </>
+        )}
 
         <div className="flex-1 min-w-0">
-          <motion.div 
-            className={`text-lg font-semibold ${task.completed ? 'line-through text-gray-300' : 'text-white'}`}
-            animate={{ 
-              textDecoration: task.completed ? 'line-through' : 'none',
-              color: task.completed ? '#D1D5DB' : '#FFFFFF'
-            }}
-            transition={{ duration: 0.3 }}
-          >
-            {task.title}
-          </motion.div>
-          {task.description && (
-            <motion.div 
-              className={`text-sm mt-1 ${task.completed ? 'text-gray-400' : 'text-cyan-100'}`}
-              animate={{ 
-                color: task.completed ? '#9CA3AF' : '#67E8F9'
-              }}
-              transition={{ duration: 0.3 }}
-            >
-              {task.description}
-            </motion.div>
+          {isEditing ? (
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                className="w-full px-2 py-1 bg-white/10 border border-white/20 rounded text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              />
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                className="w-full px-2 py-1 bg-white/10 border border-white/20 rounded text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none"
+                rows={2}
+              />
+              <div className="flex items-center gap-2 mt-1">
+                <select
+                  value={formData.priority}
+                  onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as Task['priority'] }))}
+                  className="px-2 py-1 bg-white/10 border border-white/20 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                >
+                  <option value="low">{PRIORITY_LABELS.low}</option>
+                  <option value="medium">{PRIORITY_LABELS.medium}</option>
+                  <option value="high">{PRIORITY_LABELS.high}</option>
+                </select>
+                <select
+                  value={formData.category}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  className="px-2 py-1 bg-white/10 border border-white/20 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                >
+                  {categories.map(c => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+                <span className="text-xs text-gray-300 flex items-center ml-auto">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  {new Date(task.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <>
+              <motion.div
+                className={`text-lg font-semibold ${task.completed ? 'line-through text-gray-300' : 'text-white'}`}
+                animate={{
+                  textDecoration: task.completed ? 'line-through' : 'none',
+                  color: task.completed ? '#D1D5DB' : '#FFFFFF'
+                }}
+                transition={{ duration: 0.3 }}
+              >
+                {task.title}
+              </motion.div>
+              {task.description && (
+                <motion.div
+                  className={`text-sm mt-1 ${task.completed ? 'text-gray-400' : 'text-cyan-100'}`}
+                  animate={{
+                    color: task.completed ? '#9CA3AF' : '#67E8F9'
+                  }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {task.description}
+                </motion.div>
+              )}
+              <div className="flex items-center gap-3 mt-2">
+                <motion.span
+                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    PRIORITY_COLORS[task.priority]
+                  } text-white`}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
+                  <Star className="w-3 h-3 mr-1" />
+                  {PRIORITY_LABELS[task.priority]}
+                </motion.span>
+                <motion.span
+                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white/20 text-white"
+                  style={{ backgroundColor: task.category_color + '40' }}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
+                  {task.category}
+                </motion.span>
+                <span className="text-xs text-gray-300 flex items-center">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  {new Date(task.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            </>
           )}
-          <div className="flex items-center gap-3 mt-2">
-            <motion.span 
-              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                PRIORITY_COLORS[task.priority]
-              } text-white`}
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400 }}
-            >
-              <Star className="w-3 h-3 mr-1" />
-              {PRIORITY_LABELS[task.priority]}
-            </motion.span>
-            <motion.span 
-              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white/20 text-white"
-              style={{ backgroundColor: task.category_color + '40' }}
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400 }}
-            >
-              {task.category}
-            </motion.span>
-            <span className="text-xs text-gray-300 flex items-center">
-              <Calendar className="w-3 h-3 mr-1" />
-              {new Date(task.created_at).toLocaleDateString()}
-            </span>
-          </div>
         </div>
 
-        {/* Edit Button */}
-        <motion.button
-          onClick={(e) => {
-            e.stopPropagation()
-            onEdit(task)
-          }}
-          className="flex-shrink-0 text-cyan-400 hover:text-cyan-300 hover:scale-110 transition-all duration-200 hover:bg-white/10 p-2 rounded-lg"
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          whileTap={{ scale: 0.9, rotate: -5 }}
-        >
-          <Pencil className="w-5 h-5" />
-        </motion.button>
+        {isEditing ? (
+          <div className="flex gap-2">
+            <motion.button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleCancel()
+              }}
+              className="text-white bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg text-sm"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Cancel
+            </motion.button>
+            <motion.button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleSave()
+              }}
+              className="text-white bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 px-3 py-1 rounded-lg text-sm"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Save
+            </motion.button>
+          </div>
+        ) : (
+          <>
+            {/* Edit Button */}
+            <motion.button
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsEditing(true)
+              }}
+              className="flex-shrink-0 text-cyan-400 hover:text-cyan-300 hover:scale-110 transition-all duration-200 hover:bg-white/10 p-2 rounded-lg"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              whileTap={{ scale: 0.9, rotate: -5 }}
+            >
+              <Pencil className="w-5 h-5" />
+            </motion.button>
 
-        {/* Enhanced Delete Button */}
-        <motion.button
-          onClick={(e) => {
-            e.stopPropagation()
-            onDelete(task.id)
-          }}
-          className="flex-shrink-0 text-red-400 hover:text-red-300 hover:scale-110 transition-all duration-200 hover:bg-white/10 p-2 rounded-lg"
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          whileTap={{ scale: 0.9, rotate: -5 }}
-        >
-          <Trash2 className="w-5 h-5" />
-        </motion.button>
+            {/* Enhanced Delete Button */}
+            <motion.button
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete(task.id)
+              }}
+              className="flex-shrink-0 text-red-400 hover:text-red-300 hover:scale-110 transition-all duration-200 hover:bg-white/10 p-2 rounded-lg"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              whileTap={{ scale: 0.9, rotate: -5 }}
+            >
+              <Trash2 className="w-5 h-5" />
+            </motion.button>
+          </>
+        )}
       </div>
     </motion.div>
   )
 }
 
-export default function TaskList({ tasks, onToggle, onDelete, onReorder, onEdit }: TaskListProps) {
+export default function TaskList({ tasks, categories, onToggle, onDelete, onReorder, onEdit }: TaskListProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -293,6 +412,7 @@ export default function TaskList({ tasks, onToggle, onDelete, onReorder, onEdit 
               <SortableTaskItem
                 key={task.id}
                 task={task}
+                categories={categories}
                 onToggle={onToggle}
                 onDelete={onDelete}
                 onEdit={onEdit}

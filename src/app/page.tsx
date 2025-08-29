@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { motion, useScroll, useTransform, useSpring, AnimatePresence } from 'framer-motion'
-import { Plus, Settings, BarChart3 } from 'lucide-react'
+import { Plus, Settings, BarChart3, LogOut } from 'lucide-react'
 import TaskList from '@/components/TaskList'
 import TaskForm from '@/components/TaskForm'
 import CategoryManager from '@/components/CategoryManager'
 import ProgressStats from '@/components/ProgressStats'
 import { Task, Category } from '@/types'
+import { supabase } from '@/lib/supabase'
+import AuthForm from '@/components/AuthForm'
+import type { User } from '@supabase/supabase-js'
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -17,6 +20,7 @@ export default function Home() {
   const [showStats, setShowStats] = useState(false)
   const [loading, setLoading] = useState(true)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [user, setUser] = useState<User | null>(null)
 
   const { scrollY } = useScroll()
   const springConfig = { damping: 20, stiffness: 100 }
@@ -28,103 +32,149 @@ export default function Home() {
   const aurora3Y = useSpring(useTransform(scrollY, [0, 1000], [0, -200]), springConfig)
 
   useEffect(() => {
-    fetchData()
-    
+    const init = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      setUser(session?.user ?? null)
+      if (session?.user) {
+        await fetchData(session.user.id)
+      } else {
+        setLoading(false)
+      }
+    }
+    init()
+
+    // Auth state listener
+    const {
+      data: authListener,
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+      if (session?.user) {
+        fetchData(session.user.id)
+      } else {
+        setTasks([])
+        setCategories([])
+      }
+    })
+
     // Mouse movement effect
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY })
     }
-    
+
     window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      authListener.subscription.unsubscribe()
+    }
   }, [])
 
-  const fetchData = async () => {
+  const fetchData = async (userId: string) => {
     try {
-      // For demo purposes, we'll use mock data
-      // In production, you'd fetch from Supabase
-      const mockTasks: Task[] = [
-        {
-          id: '1',
-          title: 'Complete project proposal',
-          description: 'Write and submit the quarterly project proposal',
-          completed: false,
-          priority: 'high',
-          category: 'Work',
-          category_color: '#3B82F6',
-          order: 1,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          user_id: 'demo'
-        },
-        {
-          id: '2',
-          title: 'Buy groceries',
-          description: 'Get items for the week',
-          completed: true,
-          priority: 'medium',
-          category: 'Personal',
-          category_color: '#10B981',
-          order: 2,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          user_id: 'demo'
-        },
-        {
-          id: '3',
-          title: 'Exercise routine',
-          description: 'Complete 30-minute workout session',
-          completed: false,
-          priority: 'medium',
-          category: 'Health',
-          category_color: '#F59E0B',
-          order: 3,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          user_id: 'demo'
-        }
-      ]
+      const { data: tasksData, error: tasksError } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', userId)
+        .order('order', { ascending: true })
 
-      const mockCategories: Category[] = [
-        { id: '1', name: 'Work', color: '#3B82F6', user_id: 'demo', created_at: new Date().toISOString() },
-        { id: '2', name: 'Personal', color: '#10B981', user_id: 'demo', created_at: new Date().toISOString() },
-        { id: '3', name: 'Health', color: '#F59E0B', user_id: 'demo', created_at: new Date().toISOString() }
-      ]
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: true })
 
-      setTasks(mockTasks)
-      setCategories(mockCategories)
-      setLoading(false)
+      if (tasksError) throw tasksError
+      if (categoriesError) throw categoriesError
+
+      setTasks((tasksData ?? []) as Task[])
+      setCategories((categoriesData ?? []) as Category[])
     } catch (error) {
       console.error('Error fetching data:', error)
+    } finally {
       setLoading(false)
     }
   }
 
-  const addTask = (taskData: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => {
-    const newTask: Task = {
-      ...taskData,
-      id: Date.now().toString(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      user_id: 'demo'
+  const addTask = async (
+    taskData: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'user_id'>
+  ) => {
+    if (!user) return
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert({
+        ...taskData,
+        user_id: user.id,
+        completed: false,
+        order: tasks.length + 1,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error adding task:', error)
+      return
     }
-    setTasks(prev => [...prev, newTask])
+
+    setTasks((prev) => [...prev, data as Task])
     setShowTaskForm(false)
   }
 
-  const toggleTask = (id: string) => {
-    console.log('Toggling task:', id) // Debug log
-    setTasks(prev => prev.map(task => 
-      task.id === id ? { ...task, completed: !task.completed, updated_at: new Date().toISOString() } : task
-    ))
+  const toggleTask = async (id: string) => {
+    const task = tasks.find((t) => t.id === id)
+    if (!task) return
+    const { data, error } = await supabase
+      .from('tasks')
+      .update({
+        completed: !task.completed,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .eq('user_id', user?.id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error toggling task:', error)
+      return
+    }
+
+    setTasks((prev) => prev.map((t) => (t.id === id ? (data as Task) : t)))
   }
 
-  const deleteTask = (id: string) => {
-    setTasks(prev => prev.filter(task => task.id !== id))
+  const deleteTask = async (id: string) => {
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user?.id)
+
+    if (error) {
+      console.error('Error deleting task:', error)
+      return
+    }
+
+    setTasks((prev) => prev.filter((task) => task.id !== id))
   }
 
-  const updateTaskOrder = (newTasks: Task[]) => {
-    setTasks(newTasks.map((task, index) => ({ ...task, order: index + 1 })))
+  const updateTaskOrder = async (newTasks: Task[]) => {
+    setTasks(newTasks)
+    await Promise.all(
+      newTasks.map((task, index) =>
+        supabase
+          .from('tasks')
+          .update({ order: index + 1 })
+          .eq('id', task.id)
+          .eq('user_id', user?.id)
+      )
+    )
+  }
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+    setTasks([])
+    setCategories([])
   }
 
   if (loading) {
@@ -160,6 +210,10 @@ export default function Home() {
         </div>
       </div>
     )
+  }
+
+  if (!user) {
+    return <AuthForm />
   }
 
   const completedCount = tasks.filter(t => t.completed).length
@@ -428,6 +482,23 @@ export default function Home() {
             <span className="relative z-10">
               <BarChart3 className="inline mr-2 h-5 w-5" />
               Analytics
+            </span>
+          </motion.button>
+
+          <motion.button
+            onClick={handleSignOut}
+            className="bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-red-500/25 relative overflow-hidden"
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+              animate={{ x: ['-100%', '100%'] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'linear', delay: 1.5 }}
+            />
+            <span className="relative z-10">
+              <LogOut className="inline mr-2 h-5 w-5" />
+              Sign Out
             </span>
           </motion.button>
         </motion.div>

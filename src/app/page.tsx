@@ -76,7 +76,6 @@ export default function Home() {
         .from('tasks')
         .select('*')
         .eq('user_id', userId)
-        .eq('archived', false)
         .order('order', { ascending: true })
 
       const { data: categoriesData, error: categoriesError } = await supabase
@@ -101,6 +100,7 @@ export default function Home() {
     taskData: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'user_id'>
   ) => {
     if (!user) return
+    const activeCount = tasks.filter(t => !t.archived).length
     const { data, error } = await supabase
       .from('tasks')
       .insert({
@@ -108,7 +108,7 @@ export default function Home() {
         user_id: user.id,
         completed: false,
         archived: false,
-        order: tasks.length + 1,
+        order: activeCount + 1,
       })
       .select()
       .single()
@@ -118,7 +118,11 @@ export default function Home() {
       return
     }
 
-    setTasks((prev) => [...prev, data as Task])
+    setTasks((prev) => {
+      const archived = prev.filter(t => t.archived)
+      const active = prev.filter(t => !t.archived)
+      return [...active, data as Task, ...archived]
+    })
     setShowTaskForm(false)
   }
 
@@ -177,18 +181,20 @@ export default function Home() {
   }
 
   const archiveTask = async (id: string) => {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('tasks')
       .update({ archived: true, updated_at: new Date().toISOString() })
       .eq('id', id)
       .eq('user_id', user?.id)
+      .select()
+      .single()
 
     if (error) {
       console.error('Error archiving task:', error)
       return
     }
 
-    setTasks((prev) => prev.filter((task) => task.id !== id))
+    setTasks((prev) => prev.map((task) => (task.id === id ? (data as Task) : task)))
   }
 
   const updateTaskOrder = async (newTasks: Task[]) => {
@@ -302,8 +308,9 @@ export default function Home() {
     return <AuthForm />
   }
 
-  const completedCount = tasks.filter(t => t.completed).length
-  const totalCount = tasks.length
+  const activeTasks = tasks.filter(t => !t.archived)
+  const completedCount = activeTasks.filter(t => t.completed).length
+  const totalCount = activeTasks.length
   const progressPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
 
   return (
@@ -425,7 +432,7 @@ export default function Home() {
               backgroundSize: '200% 200%'
             }}
           >
-            Aurora Checklist
+            Aurora
           </motion.h1>
           <motion.p 
             className="text-xl text-cyan-100"

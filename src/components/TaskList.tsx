@@ -299,18 +299,19 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
           </motion.button>
         )}
 
-        {/* Archive Button */}
-        <motion.button
-          onClick={(e) => {
-            e.stopPropagation()
-            onArchive(task.id)
-          }}
-          className="flex-shrink-0 text-yellow-400 hover:text-yellow-300 hover:scale-110 transition-all duration-200 hover:bg-white/10 p-2 rounded-lg"
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          whileTap={{ scale: 0.9, rotate: -5 }}
-        >
-          <Archive className="w-5 h-5" />
-        </motion.button>
+        {!task.archived && (
+          <motion.button
+            onClick={(e) => {
+              e.stopPropagation()
+              onArchive(task.id)
+            }}
+            className="flex-shrink-0 text-yellow-400 hover:text-yellow-300 hover:scale-110 transition-all duration-200 hover:bg-white/10 p-2 rounded-lg"
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            whileTap={{ scale: 0.9, rotate: -5 }}
+          >
+            <Archive className="w-5 h-5" />
+          </motion.button>
+        )}
 
         {/* Enhanced Delete Button */}
         <motion.button
@@ -332,6 +333,7 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
 export default function TaskList({ tasks, categories, onToggle, onDelete, onArchive, onEdit, onReorder }: TaskListProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [priorityFilter, setPriorityFilter] = useState<Task['priority'] | ''>('')
+  const [view, setView] = useState<'active' | 'archived'>('active')
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -344,7 +346,9 @@ export default function TaskList({ tasks, categories, onToggle, onDelete, onArch
     })
   )
 
-  const filteredTasks = tasks.filter(task => {
+  const viewTasks = tasks.filter(task => (view === 'archived' ? task.archived : !task.archived))
+
+  const filteredTasks = viewTasks.filter(task => {
     const matchesSearch =
       task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (task.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
@@ -356,19 +360,25 @@ export default function TaskList({ tasks, categories, onToggle, onDelete, onArch
     const { active, over } = event
 
     if (active.id !== over?.id) {
-      const oldIndex = tasks.findIndex(task => task.id === active.id)
-      const newIndex = tasks.findIndex(task => task.id === over?.id)
-      
+      const currentTasks = tasks.filter(t => (view === 'archived' ? t.archived : !t.archived))
+      const oldIndex = currentTasks.findIndex(task => task.id === active.id)
+      const newIndex = currentTasks.findIndex(task => task.id === over?.id)
+
       if (oldIndex !== -1 && newIndex !== -1) {
-        const newTasks = arrayMove(tasks, oldIndex, newIndex)
+        const newCurrentTasks = arrayMove(currentTasks, oldIndex, newIndex)
+        const otherTasks = tasks.filter(t => (view === 'archived' ? !t.archived : t.archived))
+        const newTasks =
+          view === 'archived'
+            ? [...otherTasks, ...newCurrentTasks]
+            : [...newCurrentTasks, ...otherTasks]
         onReorder(newTasks)
       }
     }
   }
 
-  if (tasks.length === 0) {
+  if (viewTasks.length === 0) {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         className="text-center py-12 relative"
@@ -416,21 +426,34 @@ export default function TaskList({ tasks, categories, onToggle, onDelete, onArch
         >
           ✨
         </motion.div>
-        <div className="text-xl text-white mb-2 relative z-10">No tasks yet</div>
-        <div className="text-cyan-200 relative z-10">Create your first task to get started!</div>
+        <div className="text-xl text-white mb-2 relative z-10">{view === 'archived' ? 'No archived tasks' : 'No tasks yet'}</div>
+        {view !== 'archived' && (
+          <div className="text-cyan-200 relative z-10">Create your first task to get started!</div>
+        )}
       </motion.div>
     )
   }
 
   return (
     <div>
-      <motion.h2
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-2xl font-bold text-white mb-6 text-center"
+        className="flex justify-center mb-6 gap-6"
       >
-        Your Tasks
-      </motion.h2>
+        <button
+          onClick={() => setView('active')}
+          className={`pb-1 transition-colors ${view === 'active' ? 'text-white border-b-2 border-white' : 'text-gray-400'}`}
+        >
+          Your Tasks
+        </button>
+        <button
+          onClick={() => setView('archived')}
+          className={`pb-1 transition-colors ${view === 'archived' ? 'text-white border-b-2 border-white' : 'text-gray-400'}`}
+        >
+          Archived
+        </button>
+      </motion.div>
 
       <div className="flex flex-col sm:flex-row gap-2 mb-6">
         <input

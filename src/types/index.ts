@@ -42,12 +42,7 @@ export interface CategoryFormData {
 
 export type PriorityLevel = 'low' | 'medium' | 'high'
 
-export type RepeatInterval =
-  | 'none'
-  | 'daily'
-  | 'weekly'
-  | 'monthly'
-  | 'yearly'
+export type RepeatInterval = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
 
 export const PRIORITY_COLORS = {
   low: 'bg-blue-500',

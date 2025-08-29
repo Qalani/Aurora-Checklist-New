@@ -7,7 +7,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { CheckCircle2, Circle, Trash2, Star, Calendar, GripVertical, Edit2, Check, X, Archive, Pin, Repeat } from 'lucide-react'
-import { Task, Category, PRIORITY_COLORS, PRIORITY_LABELS, REPEAT_LABELS, RepeatInterval } from '@/types'
+import { Task, Category, PRIORITY_COLORS, PRIORITY_LABELS, REPEAT_LABELS } from '@/types'
 
 interface TaskListProps {
   tasks: Task[]
@@ -219,12 +219,7 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
                 </select>
                 <select
                   value={editData.repeat_interval}
-                  onChange={(e) =>
-                    setEditData(prev => ({
-                      ...prev,
-                      repeat_interval: e.target.value as RepeatInterval
-                    }))
-                  }
+                  onChange={(e) => setEditData(prev => ({ ...prev, repeat_interval: e.target.value as Task['repeat_interval'] }))}
                   className="px-2 py-1 bg-white/10 border border-white/20 rounded text-white"
                 >
                   <option value="none">No repeat</option>

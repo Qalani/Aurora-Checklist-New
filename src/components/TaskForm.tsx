@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Plus } from 'lucide-react'
-import { Task, Category, TaskFormData, PriorityLevel, RepeatInterval } from '@/types'
+import { Task, Category, TaskFormData, PriorityLevel } from '@/types'
 
 interface TaskFormProps {
   categories: Category[]
@@ -28,15 +28,6 @@ export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProp
     repeat_interval: 'none',
     pinned: false
   })
-
-  const [repeatChoice, setRepeatChoice] = useState<RepeatInterval>('none')
-
-  useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      repeat_interval: repeatChoice
-    }))
-  }, [repeatChoice])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -136,8 +127,8 @@ export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProp
           Repeat
         </label>
         <select
-          value={repeatChoice}
-          onChange={(e) => setRepeatChoice(e.target.value as RepeatInterval)}
+          value={formData.repeat_interval}
+          onChange={(e) => setFormData(prev => ({ ...prev, repeat_interval: e.target.value as Task['repeat_interval'] }))}
           className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
         >
           <option value="none">Does not repeat</option>

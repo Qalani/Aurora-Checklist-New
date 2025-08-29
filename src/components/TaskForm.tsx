@@ -23,7 +23,8 @@ export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProp
     description: '',
     priority: 'medium',
     category: categories[0]?.name || '',
-    category_color: categories[0]?.color || '#3B82F6'
+    category_color: categories[0]?.color || '#3B82F6',
+    due_date: ''
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -35,6 +36,7 @@ export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProp
       ...formData,
       category: selectedCategory?.name || 'General',
       category_color: selectedCategory?.color || '#6B7280',
+      due_date: formData.due_date || null,
       completed: false,
       order: 0
     }
@@ -102,6 +104,18 @@ export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProp
                 rows={3}
                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none"
                 placeholder="Add more details..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-cyan-200 mb-2">
+                Due Date
+              </label>
+              <input
+                type="date"
+                value={formData.due_date}
+                onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
               />
             </div>
 

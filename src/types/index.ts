@@ -6,6 +6,7 @@ export interface Task {
   priority: 'low' | 'medium' | 'high'
   category: string
   category_color: string
+  due_date: string | null
   order: number
   created_at: string
   updated_at: string
@@ -26,6 +27,7 @@ export interface TaskFormData {
   priority: 'low' | 'medium' | 'high'
   category: string
   category_color: string
+  due_date: string
 }
 
 export interface CategoryFormData {

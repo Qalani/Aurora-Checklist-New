@@ -34,7 +34,8 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onEdit, index 
     description: task.description || '',
     priority: task.priority,
     category: task.category,
-    category_color: task.category_color
+    category_color: task.category_color,
+    due_date: task.due_date ? task.due_date.split('T')[0] : ''
   })
 
   useEffect(() => {
@@ -43,7 +44,8 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onEdit, index 
       description: task.description || '',
       priority: task.priority,
       category: task.category,
-      category_color: task.category_color
+      category_color: task.category_color,
+      due_date: task.due_date ? task.due_date.split('T')[0] : ''
     })
   }, [task])
 
@@ -63,7 +65,8 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onEdit, index 
       description: editData.description,
       priority: editData.priority,
       category: editData.category,
-      category_color: editData.category_color
+      category_color: editData.category_color,
+      due_date: editData.due_date || null
     })
     setIsEditing(false)
   }
@@ -76,7 +79,8 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onEdit, index 
       description: task.description || '',
       priority: task.priority,
       category: task.category,
-      category_color: task.category_color
+      category_color: task.category_color,
+      due_date: task.due_date ? task.due_date.split('T')[0] : ''
     })
   }
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id })
@@ -180,6 +184,12 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onEdit, index 
                 value={editData.description}
                 onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
               />
+              <input
+                type="date"
+                className="w-full mb-2 px-2 py-1 bg-white/10 border border-white/20 rounded text-white focus:outline-none"
+                value={editData.due_date}
+                onChange={(e) => setEditData(prev => ({ ...prev, due_date: e.target.value }))}
+              />
               <div className="flex items-center gap-2">
                 <select
                   value={editData.priority}
@@ -247,7 +257,7 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onEdit, index 
                 </motion.span>
                 <span className="text-xs text-gray-300 flex items-center">
                   <Calendar className="w-3 h-3 mr-1" />
-                  {new Date(task.created_at).toLocaleDateString()}
+                  {new Date((task.due_date || task.created_at)).toLocaleDateString()}
                 </span>
               </div>
             </>

@@ -25,6 +25,8 @@ export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProp
     category: categories[0]?.name || '',
     category_color: categories[0]?.color || '#3B82F6',
     due_date: '',
+    reminder_time: '',
+    reminder_sent: false,
     repeat_interval: 'none',
     pinned: false
   })
@@ -39,6 +41,8 @@ export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProp
         category: selectedCategory?.name || 'General',
         category_color: selectedCategory?.color || '#6B7280',
         due_date: formData.due_date || null,
+        reminder_time: formData.reminder_time ? new Date(formData.reminder_time).toISOString() : null,
+        reminder_sent: false,
         completed: false,
         archived: false,
         order: 0
@@ -118,6 +122,18 @@ export default function TaskForm({ categories, onSubmit, onClose }: TaskFormProp
           type="date"
           value={formData.due_date}
           onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
+          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-cyan-200 mb-2">
+          Reminder Time
+        </label>
+        <input
+          type="datetime-local"
+          value={formData.reminder_time}
+          onChange={(e) => setFormData(prev => ({ ...prev, reminder_time: e.target.value }))}
           className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
         />
       </div>

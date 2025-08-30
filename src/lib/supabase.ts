@@ -14,9 +14,15 @@ export type Database = {
           title: string
           description: string | null
           completed: boolean
+          archived: boolean
+          pinned: boolean
           priority: 'low' | 'medium' | 'high'
           category: string
           category_color: string
+          due_date: string | null
+          reminder_time: string | null
+          reminder_sent: boolean
+          repeat_interval: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
           order: number
           created_at: string
           updated_at: string
@@ -27,9 +33,15 @@ export type Database = {
           title: string
           description?: string | null
           completed?: boolean
+          archived?: boolean
+          pinned?: boolean
           priority?: 'low' | 'medium' | 'high'
           category: string
           category_color: string
+          due_date?: string | null
+          reminder_time?: string | null
+          reminder_sent?: boolean
+          repeat_interval?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
           order: number
           created_at?: string
           updated_at?: string
@@ -40,9 +52,15 @@ export type Database = {
           title?: string
           description?: string | null
           completed?: boolean
+          archived?: boolean
+          pinned?: boolean
           priority?: 'low' | 'medium' | 'high'
           category?: string
           category_color?: string
+          due_date?: string | null
+          reminder_time?: string | null
+          reminder_sent?: boolean
+          repeat_interval?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
           order?: number
           created_at?: string
           updated_at?: string
@@ -69,6 +87,32 @@ export type Database = {
           name?: string
           color?: string
           user_id?: string
+          created_at?: string
+        }
+      }
+      push_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          endpoint?: string
+          p256dh?: string
+          auth?: string
           created_at?: string
         }
       }

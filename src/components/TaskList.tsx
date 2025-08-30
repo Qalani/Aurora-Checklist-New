@@ -6,7 +6,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { CheckCircle2, Circle, Trash2, Star, Calendar, GripVertical, Edit2, Check, X, Archive, Pin, Repeat } from 'lucide-react'
+import { CheckCircle2, Circle, Trash2, Star, Calendar, GripVertical, Edit2, Check, X, Archive, Pin, Repeat, Bell, BellOff } from 'lucide-react'
 import { Task, Category, PRIORITY_COLORS, PRIORITY_LABELS, REPEAT_LABELS } from '@/types'
 
 interface TaskListProps {
@@ -38,6 +38,7 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
     category: task.category,
     category_color: task.category_color,
     due_date: task.due_date ? task.due_date.split('T')[0] : '',
+    reminder_time: task.reminder_time ? task.reminder_time.slice(0, 16) : '',
     repeat_interval: task.repeat_interval
   })
 
@@ -49,6 +50,7 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
       category: task.category,
       category_color: task.category_color,
       due_date: task.due_date ? task.due_date.split('T')[0] : '',
+      reminder_time: task.reminder_time ? task.reminder_time.slice(0, 16) : '',
       repeat_interval: task.repeat_interval
     })
   }, [task])
@@ -71,6 +73,8 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
       category: editData.category,
       category_color: editData.category_color,
       due_date: editData.due_date || null,
+      reminder_time: editData.reminder_time ? new Date(editData.reminder_time).toISOString() : null,
+      reminder_sent: false,
       repeat_interval: editData.repeat_interval
     })
     setIsEditing(false)
@@ -86,6 +90,7 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
       category: task.category,
       category_color: task.category_color,
       due_date: task.due_date ? task.due_date.split('T')[0] : '',
+      reminder_time: task.reminder_time ? task.reminder_time.slice(0, 16) : '',
       repeat_interval: task.repeat_interval
     })
   }
@@ -196,6 +201,12 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
                 value={editData.due_date}
                 onChange={(e) => setEditData(prev => ({ ...prev, due_date: e.target.value }))}
               />
+              <input
+                type="datetime-local"
+                className="w-full mb-2 px-2 py-1 bg-white/10 border border-white/20 rounded text-white focus:outline-none"
+                value={editData.reminder_time}
+                onChange={(e) => setEditData(prev => ({ ...prev, reminder_time: e.target.value }))}
+              />
               <div className="flex items-center gap-2">
                 <select
                   value={editData.priority}
@@ -286,6 +297,22 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
                   <Calendar className="w-3 h-3 mr-1" />
                   {new Date((task.due_date || task.created_at)).toLocaleDateString()}
                 </span>
+                {task.reminder_time && (
+                  <span
+                    className={`text-xs flex items-center ${
+                      task.reminder_sent ? 'text-green-300' : 'text-cyan-300'
+                    }`}
+                  >
+                    {task.reminder_sent ? (
+                      <Check className="w-3 h-3 mr-1" />
+                    ) : (
+                      <Bell className="w-3 h-3 mr-1" />
+                    )}
+                    {task.reminder_sent
+                      ? 'Reminder sent'
+                      : new Date(task.reminder_time).toLocaleString()}
+                  </span>
+                )}
               </div>
             </>
           )}
@@ -323,6 +350,23 @@ function SortableTaskItem({ task, categories, onToggle, onDelete, onArchive, onE
             <Edit2 className="w-5 h-5" />
           </motion.button>
         )}
+        <motion.button
+          onClick={(e) => {
+            e.stopPropagation()
+            if (task.reminder_time) {
+              onEdit(task.id, { reminder_time: null, reminder_sent: false })
+            } else {
+              setIsEditing(true)
+            }
+          }}
+          className={`flex-shrink-0 hover:scale-110 transition-all duration-200 hover:bg-white/10 p-2 rounded-lg ${
+            task.reminder_time ? 'text-green-400 hover:text-green-300' : 'text-gray-400 hover:text-gray-300'
+          }`}
+          whileHover={{ scale: 1.1, rotate: 5 }}
+          whileTap={{ scale: 0.9, rotate: -5 }}
+        >
+          {task.reminder_time ? <Bell className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
+        </motion.button>
 
         <motion.button
           onClick={(e) => {

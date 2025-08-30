@@ -2,8 +2,8 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-// Use npm specifier for Node compatibility in Supabase Edge runtime
-import webpush from "npm:web-push@3.6.7";
+// web-push is mapped via deno.json for Node compatibility
+import webpush from "web-push";
 
 type ReminderTask = {
   id: string;

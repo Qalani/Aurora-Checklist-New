@@ -53,7 +53,7 @@ Edit `.env.local` with your Supabase credentials:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+SERVICE_ROLE_KEY=your_service_role_key
 ```
 
 4. Run the development server:
@@ -111,7 +111,7 @@ CREATE TABLE categories (
 Make sure to set these in your Vercel project:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+ - `SERVICE_ROLE_KEY`
 
 ## Project Structure 📁
 

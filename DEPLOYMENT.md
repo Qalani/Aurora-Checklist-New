@@ -87,8 +87,8 @@ This guide will help you deploy your Aurora Checklist app to Vercel with Supabas
    Value: [Your Supabase Anon Key]
    Environment: Production, Preview, Development
    
-   Name: SUPABASE_SERVICE_ROLE_KEY
-   Value: [Your Supabase Service Role Key]
+    Name: SERVICE_ROLE_KEY
+    Value: [Your Supabase Service Role Key]
    Environment: Production, Preview, Development
    ```
 

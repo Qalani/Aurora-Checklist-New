@@ -38,26 +38,28 @@ serve(async () => {
         .eq("user_id", task.user_id);
 
       if (subs) {
-        for (const sub of subs) {
-          try {
-            await webpush.sendNotification(
-              {
-                endpoint: sub.endpoint,
-                keys: { p256dh: sub.p256dh, auth: sub.auth },
-              },
-              JSON.stringify({ title: "Task Reminder", body: task.title })
-            );
-          } catch (err) {
-            // Remove invalid subscriptions
-            if ((err as { statusCode?: number }).statusCode === 410) {
-              await supabase
-                .from("push_subscriptions")
-                .delete()
-                .eq("endpoint", sub.endpoint);
+        await Promise.all(
+          subs.map(async (sub) => {
+            try {
+              await webpush.sendNotification(
+                {
+                  endpoint: sub.endpoint,
+                  keys: { p256dh: sub.p256dh, auth: sub.auth },
+                },
+                JSON.stringify({ title: "Task Reminder", body: task.title })
+              );
+            } catch (err) {
+              const status = (err as { statusCode?: number }).statusCode;
+              if (status === 410 || status === 404) {
+                await supabase
+                  .from("push_subscriptions")
+                  .delete()
+                  .eq("endpoint", sub.endpoint);
+              }
+              console.error(err);
             }
-            console.error(err);
-          }
-        }
+          })
+        );
       }
     }
 

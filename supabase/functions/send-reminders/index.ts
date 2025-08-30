@@ -2,7 +2,8 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import webpush from "https://esm.sh/web-push@3.6.9";
+// Use npm specifier for Node compatibility in Supabase Edge runtime
+import webpush from "npm:web-push@3.6.9";
 
 type ReminderTask = {
   id: string;
@@ -31,13 +32,17 @@ serve(async () => {
       Deno.env.get("WEB_PUSH_PRIVATE_KEY")!
     );
 
+    const sentTaskIds: string[] = [];
+
     for (const task of tasks) {
       const { data: subs } = await supabase
         .from("push_subscriptions")
         .select("endpoint, p256dh, auth")
         .eq("user_id", task.user_id);
 
-      if (subs) {
+      if (subs && subs.length) {
+        let delivered = false;
+
         await Promise.all(
           subs.map(async (sub) => {
             try {
@@ -48,6 +53,7 @@ serve(async () => {
                 },
                 JSON.stringify({ title: "Task Reminder", body: task.title })
               );
+              delivered = true;
             } catch (err) {
               const status = (err as { statusCode?: number }).statusCode;
               if (status === 410 || status === 404) {
@@ -60,16 +66,19 @@ serve(async () => {
             }
           })
         );
+
+        if (delivered) {
+          sentTaskIds.push(task.id);
+        }
       }
     }
 
-    await supabase
-      .from("tasks")
-      .update({ reminder_sent: true })
-      .in(
-        "id",
-        tasks.map((t) => t.id)
-      );
+    if (sentTaskIds.length) {
+      await supabase
+        .from("tasks")
+        .update({ reminder_sent: true })
+        .in("id", sentTaskIds);
+    }
   }
 
   return new Response(

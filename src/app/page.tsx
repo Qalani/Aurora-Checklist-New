@@ -151,7 +151,7 @@ export default function Home() {
         .from('tasks')
         .update({
           due_date: base.toISOString(),
-          completed: false,
+          completed: true,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
